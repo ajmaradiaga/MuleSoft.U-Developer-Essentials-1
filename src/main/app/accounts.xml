@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:json="http://www.mulesoft.org/schema/mule/json"
+	xmlns:sfdc="http://www.mulesoft.org/schema/mule/sfdc"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" version="EE-3.7.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
+http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfdc/current/mule-sfdc.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+
+<flow name="getSFDCAccountsFlow">
+        <http:listener config-ref="HTTP_Listener_Configuration" path="/sfdc" allowedMethods="GET" doc:name="HTTP"/>
+        <sfdc:query config-ref="Salesforce__Basic_authentication" query="dsql:SELECT BillingCity,BillingCountry,BillingPostalCode,BillingState,BillingStreet,Name FROM Account WHERE BillingPostalCode = '27215'" doc:name="Salesforce"/>
+        <json:object-to-json-transformer doc:name="Object to JSON"/>
+        <logger message="#[payload]" level="INFO" doc:name="Logger"/>
+    </flow>
+    <flow name="getCSVAccountsFlow">
+        <file:inbound-endpoint path="src/main/resources/input" moveToPattern="#[message.inboundProperties.originalFilename].backup" moveToDirectory="src/main/resources/output" responseTimeout="10000" doc:name="File">
+            <file:filename-regex-filter pattern=".*csv" caseSensitive="false"/>
+        </file:inbound-endpoint>
+        <file:file-to-string-transformer doc:name="File to String"/>
+        <logger message="#[payload]" level="INFO" doc:name="Logger"/>
+    </flow>
+    <flow name="getBankAccountsFlow">
+        <http:listener config-ref="HTTP_Listener_Configuration" path="/bank/{ID}" allowedMethods="GET" doc:name="HTTP"/>
+        <http:request config-ref="Bank_REST_Request_Configuration" path="/customers/{customer_id}/accounts" method="GET" doc:name="Bank REST Request">
+            <http:request-builder>
+                <http:uri-param paramName="customer_id" value="#[message.inboundProperties.'http.uri.params'.ID]"/>
+            </http:request-builder>
+        </http:request>
+    </flow>
+</mule>

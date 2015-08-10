@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
+	<classpathentry kind="src" path="src/main/api"/>
+	<classpathentry exported="true" kind="con" path="MULE_RUNTIME/org.mule.tooling.server.3.7.0.ee"/>
+	<classpathentry kind="src" output="target/test-classes" path="src/test/resources"/>
+	<classpathentry kind="src" path="src/main/app"/>
+	<classpathentry kind="src" path="mappings"/>
+	<classpathentry kind="src" output="target/test-classes" path="src/test/java"/>
+	<classpathentry kind="src" path="src/main/java"/>
+	<classpathentry kind="lib" path="src/main/app/lib/mysql-connector-java-5.0.8-bin.jar"/>
+	<classpathentry kind="lib" path="src/main/app/lib/activemq-all-5.6.0.jar"/>
+	<classpathentry kind="src" path="src/main/resources"/>
+	<classpathentry kind="con" path="MULE_LIB/Salesforce/org.mule.tooling.ui.contribution.sfdc.3.5.0"/>
+	<classpathentry kind="con" path="MULE_LIB/Google Contacts/org.mule.tooling.ui.contribution.google-contacts.3.5.0"/>
+	<classpathentry kind="output" path="target/classes"/>
+</classpath>

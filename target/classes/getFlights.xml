@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:data-mapper="http://www.mulesoft.org/schema/mule/ee/data-mapper" xmlns:sfdc="http://www.mulesoft.org/schema/mule/sfdc" xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:jms="http://www.mulesoft.org/schema/mule/jms" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:ws="http://www.mulesoft.org/schema/mule/ws" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:mulexml="http://www.mulesoft.org/schema/mule/xml" xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" version="EE-3.7.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
+http://www.mulesoft.org/schema/mule/ws http://www.mulesoft.org/schema/mule/ws/current/mule-ws.xsd
+http://www.mulesoft.org/schema/mule/xml http://www.mulesoft.org/schema/mule/xml/current/mule-xml.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd
+http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfdc/current/mule-sfdc.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
+http://www.mulesoft.org/schema/mule/ee/data-mapper http://www.mulesoft.org/schema/mule/ee/data-mapper/current/mule-data-mapper.xsd">
+    <expression-filter expression="#[payload != []]" name="FilterNoResultsExpression" doc:name="Expression"/>
+    <expression-filter expression="#[payload.available() != 0]" nullReturnsTrue="true" name="FilterNoResultsAvailableExpression" doc:name="Expression"/>
+    <expression-filter expression="#[payload[0] is com.mulesoft.training.Flight]" name="PayloadIsOfTypeFlight" doc:name="Expression"/>
+    <payload-type-filter expectedType="java.util.ArrayList" name="Filter_Not_ArrayList" doc:name="Payload"/>
+    <flow name="getAllAirlinesFlightsFlow">
+        <scatter-gather doc:name="Scatter-Gather">
+            <processor-chain>
+                <flow-ref name="getUnitedFlightsFlow" doc:name="getUnitedFlightsFlow"/>
+                <filter ref="Filter_Not_ArrayList" doc:name="Filter not an ArrayList"/>
+            </processor-chain>
+            <processor-chain>
+                <flow-ref name="getDeltaFlightsFlow" doc:name="getDeltaFlightsFlow"/>
+                <filter ref="Filter_Not_ArrayList" doc:name="Filter not an ArrayList"/>
+            </processor-chain>
+            <processor-chain>
+                <flow-ref name="getAmericanFlightsFlow" doc:name="getAmericanFlightsFlow"/>
+                <filter ref="Filter_Not_ArrayList" doc:name="Filter not an ArrayList"/>
+            </processor-chain>
+        </scatter-gather>
+        <combine-collections-transformer doc:name="Combine Collections"/>
+    </flow>
+    <flow name="getFlightsFlow">
+        <http:listener config-ref="HTTP_Listener_Configuration" path="/flights" allowedMethods="POST" doc:name="HTTP"/>
+        <json:json-to-object-transformer returnClass="com.mulesoft.training.FlightRequest" doc:name="JSON to Object"/>
+        <set-variable variableName="destination" value="#[payload.destination]" doc:name="Set Destination"/>
+        <set-variable variableName="airline" value="#[payload.airline]" doc:name="Set Airline"/>
+        <logger message="#[payload]" level="INFO" doc:name="Logger"/>
+        <choice doc:name="Choice">
+            <when expression="#[flowVars.airline == &quot;all&quot;]">
+                <flow-ref name="getAllAirlinesFlightsFlow" doc:name="getAllAirlinesFlightsFlow"/>
+            </when>
+            <when expression="#[flowVars.airline == &quot;united&quot;]">
+                <flow-ref name="getUnitedFlightsFlow" doc:name="getUnitedFlightsFlow"/>
+            </when>
+            <when expression="#[flowVars.airline == &quot;delta&quot;]">
+                <flow-ref name="getDeltaFlightsFlow" doc:name="getDeltaFlightsFlow"/>
+            </when>
+            <when expression="#[flowVars.airline == &quot;american&quot;]">
+                <flow-ref name="getAmericanFlightsFlow" doc:name="getAmericanFlightsFlow"/>
+            </when>
+            <otherwise>
+                <logger message="#[payload]" level="INFO" doc:name="Logger"/>
+            </otherwise>
+        </choice>
+        <filter ref="PayloadIsOfTypeFlight" doc:name="Filter Reference"/>
+        <custom-transformer class="com.mulesoft.training.FlightSortTransformer" doc:name="Sort by Price"/>
+        <json:object-to-json-transformer doc:name="Object to JSON"/>
+        <logger message="#[payload]" level="INFO" doc:name="Logger"/>
+    </flow>
+    <flow name="getFlightFormFlow">
+        <http:listener config-ref="HTTP_Listener_Configuration" path="/flights" allowedMethods="GET" doc:name="HTTP"/>
+        <parse-template location="src/main/resources/FlightFinder.html" doc:name="Parse Template"/>
+        <logger message="#[payload]" level="INFO" doc:name="Logger"/>
+    </flow>
+    <flow name="getAmericanFlightsFlow">
+        <http:listener config-ref="HTTP_Listener_Configuration" path="/american" allowedMethods="GET" doc:name="HTTP"/>
+        <set-variable variableName="destination" value="#[(message.inboundProperties.'http.query.params'.code == empty &amp;&amp; flowVars.destination == empty) ? 'SFO' : (flowVars.destination != empty ? flowVars.destination : message.inboundProperties.'http.query.params'.code)]" doc:name="Set Destination"/>
+        <db:select config-ref="Training_MySQL_Configuration" doc:name="American DB Request">
+            <db:parameterized-query><![CDATA[SELECT * 
+FROM flights
+WHERE toAirport = #[flowVars.destination]]]></db:parameterized-query>
+        </db:select>
+        <filter ref="FilterNoResultsExpression" doc:name="Filter No Results"/>
+        <data-mapper:transform config-ref="List_Map__To_Pojo" doc:name="List&lt;Map&gt; To Pojo"/>
+        <logger level="INFO" doc:name="Logger" message="#[payload]"/>
+    </flow>
+    <flow name="getDeltaFlightsFlow">
+        <http:listener config-ref="HTTP_Listener_Configuration" path="/delta" allowedMethods="GET" doc:name="HTTP"/>
+        <set-variable variableName="destination" value="#[(message.inboundProperties.'http.query.params'.code == empty &amp;&amp; flowVars.destination == empty) ? 'SFO' : (flowVars.destination != empty ? flowVars.destination : message.inboundProperties.'http.query.params'.code)]" doc:name="Set Destination"/>
+        <data-mapper:transform config-ref="String_To_Xml_listAllFlights_" input-ref="#[message.inboundProperties[&quot;http.method&quot;]]" doc:name="String To Xml&lt;findFlight&gt;">
+            <data-mapper:input-arguments>
+                <data-mapper:input-argument key="destination">#[flowVars.destination]</data-mapper:input-argument>
+            </data-mapper:input-arguments>
+        </data-mapper:transform>
+        <ws:consumer operation="findFlight" doc:name="Web Service Consumer" config-ref="Delta_Web_Service_Consumer"/>
+        <logger message="#[payload]" level="INFO" doc:name="Logger"/>
+        <mulexml:jaxb-xml-to-object-transformer returnClass="com.mulesoft.training.FlightArray" jaxbContext-ref="JAXB_Context" doc:name="XML to JAXB Object"/>
+        <set-payload value="#[payload.flights]" doc:name="Collection of Flights"/>
+        <logger message="#[payload]" level="INFO" doc:name="Logger"/>
+    </flow>
+    
+    <flow name="getUnitedFlightsFlow">
+        <http:listener config-ref="HTTP_Listener_Configuration" path="/united" doc:name="HTTP" allowedMethods="GET"/>
+        <set-variable variableName="destination" value="#[(message.inboundProperties.'http.query.params'.code == empty &amp;&amp; flowVars.destination == empty) ? 'SFO' : (flowVars.destination != empty ? flowVars.destination : message.inboundProperties.'http.query.params'.code)]" doc:name="Set Destination"/>
+        <http:request config-ref="United_HTTP_Request_Configuration" path="/{destination}" method="GET" doc:name="United REST Request">
+            <http:request-builder>
+                <http:uri-param paramName="destination" value="#[flowVars.destination]"/>
+            </http:request-builder>
+        </http:request>
+        <filter ref="FilterNoResultsAvailableExpression" doc:name="Filter Reference"/>
+        <json:json-to-object-transformer returnClass="com.mulesoft.training.FlightArray" doc:name="JSON to Object"/>
+        <set-payload value="#[payload.flights]" doc:name="Collection of Flights"/>
+        <logger level="INFO" doc:name="Logger"/>
+    </flow>
+    
+</mule>

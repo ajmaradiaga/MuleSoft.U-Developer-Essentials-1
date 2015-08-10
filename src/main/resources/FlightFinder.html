@@ -1,0 +1,204 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+	<title>Mule United Airport Flight System</title>
+	<style>
+		@import url(@import url(http://fonts.googleapis.com/css?family=Ubuntu|Roboto:400,300););
+
+		body {
+			width: 100%;
+			background-color: #fff;
+			font-weight: 200;
+			font-family: 'Roboto', sans-serif;
+		}
+		h1 {
+			font-size: 1.5em;
+			font-weight: 400;
+			font-style: normal;
+			color: #016C96;
+			font-family: 'ubuntu', sans-serif;
+			float:left;
+		}
+		h2 {
+			font-size: 1.2em;
+			font-weight: 400;
+			font-style: normal;
+			padding: 0;
+			font-family: 'ubuntu', sans-serif;
+			 display: inline;
+		}
+		form {
+			float:right;
+		}
+		.select1 {
+			width: 140px;
+			height: 25px;
+			-webkit-appearance: menulist-button;
+		}
+		.select2 {
+			width: 85px;
+			height: 25px;
+			-webkit-appearance: menulist-button;
+		}
+		#container {
+			width: 550px;
+			margin: 0 auto;
+			padding: 10px;
+			-webkit-border-radius: 5px;
+			-moz-border-radius: 5px;
+			background-color: #eee;
+			border-color: #ccc;
+			border: 1px solid #ccc;
+			overflow: hidden;
+		}
+		#myDiv {
+			width: 550px;
+			margin: 15px auto;
+			padding: 10px;
+			-webkit-border-radius: 5px;
+			-moz-border-radius: 5px;
+			background-color: #eee;
+			border-color: #ccc;
+			border: 1px solid #ccc;
+			display: none;
+		}
+		.textbox {
+			-webkit-border-radius: 5px;
+			-moz-border-radius: 5px;
+			border-radius: 5px;
+			border: 1px solid #ccc;
+			outline: 0;
+			height: 2.5em;
+			width: 300px;
+			font-size: .7em;
+			font-weight: 300;
+		}
+		.button {
+			background-color: #016C96;
+			width: 75px;
+			height: 25px;
+			border: 1px solid #eee;
+			
+			color: #fff;
+			-webkit-border-radius: 5px;
+			-moz-border-radius: 5px;
+			margin-top: 20px;
+		}
+		button:active {
+			background-color: #777;
+			color: #fff;
+			border: none;
+		}
+	</style>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<script type="text/javascript" src="http://www.json.org/json2.js"></script>
+	<script type="text/javascript">
+		function ajaxFunction() {
+			var destinationMenu = document.getElementById("destination");
+			var airlineMenu = document.getElementById("airline");
+
+			var jsonObject = {
+				"destination" : destinationMenu.options[destinationMenu.selectedIndex].value,
+				"airline" : airlineMenu.options[airlineMenu.selectedIndex].value
+			};
+
+			var formData = JSON.stringify(jsonObject);
+
+		var ajaxRequest; // The variable that makes Ajax possible!
+
+		try {
+			// Opera 8.0+, Firefox, Safari
+			ajaxRequest = new XMLHttpRequest();
+		} catch (e) {
+			// Internet Explorer Browsers
+			try {
+				ajaxRequest = new ActiveXObject("Msxml2.XMLHTTP");
+			} catch (e) {
+				try {
+					ajaxRequest = new ActiveXObject("Microsoft.XMLHTTP");
+				} catch (e) {
+					// Something went wrong
+					alert("Your browser broke!");
+					return false;
+				}
+			}
+		}
+
+		// Create a function that will receive data sent from the server
+		ajaxRequest.onreadystatechange = function() {
+			if (ajaxRequest.readyState == 4) {
+				
+				if (ajaxRequest.status == 200) {
+					var response = ajaxRequest.responseText; 
+					document.getElementById("myDiv").style.display = "block";
+
+					try {
+						var transformed = JSON.parse(response);
+							
+						document.getElementById("myDiv").innerHTML = "<h2>Available Flights</h2><br/>";
+						for ( var i = 0; i < transformed.length; i++) {
+							document.getElementById("myDiv").innerHTML += "------------------------------------------------------------------------------------------<br>Flight Code: "
+							+ transformed[i].code + "<br>";
+							document.getElementById("myDiv").innerHTML += "Airline Name: "
+							+ transformed[i].airlineName + "<br>";
+							document.getElementById("myDiv").innerHTML += "Destination: "
+							+ transformed[i].destination + "<br>";
+							document.getElementById("myDiv").innerHTML += "Plane Type: "
+							+ transformed[i].planeType + "<br>";
+							document.getElementById("myDiv").innerHTML += "Price: $"
+							+ transformed[i].price + "<br>";
+							document.getElementById("myDiv").innerHTML += "Departure Date: "
+							+ transformed[i].departureDate + "<br>";
+							document.getElementById("myDiv").innerHTML += "Available Seats: "
+							+ transformed[i].emptySeats + "<br>";
+						}
+					}
+					catch(e) {
+						if (response) {
+							document.getElementById("myDiv").innerHTML = response;
+						}
+						else{
+							document.getElementById("myDiv").innerHTML = "There are no available flights";
+						}
+					}
+				}
+			}
+		}
+
+		ajaxRequest.open("POST", "/flights", true);
+		ajaxRequest.setRequestHeader("Content-type", "application/json");
+		ajaxRequest.send(formData);
+
+	}
+</script>
+
+</head>
+<body>
+	<div id="container">
+		<h1>Mule United Airport</h1>
+		<form id="myForm" name="myForm">
+			<select id="destination" name="destination" class="select1">
+				<option value="SFO">SFO - San Francisco</option>
+				<option value="LAX">LAX - Los Angeles</option>
+				<option value="CLE">CLE - Cleveland</option>
+				<option value="PDX">PDX - Portland</option>
+				<option value="PDF">PDF - Adobe</option>
+				<option value="FOO">FOO - Mars</option>
+			</select> 
+			<select id="airline" name="airline" class="select2">
+				<option value="all">All Airlines</option>
+				<option value="united">United</option>
+				<option value="delta">Delta</option>
+				<option value="american">American</option>
+			</select>
+			<input class="button" name="submit" type="button" value="Find Flights"
+			onClick="return ajaxFunction();">			
+		</form>
+	</div>
+
+	<div id="myDiv"></div>
+
+</body>
+</html>
