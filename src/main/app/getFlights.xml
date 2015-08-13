@@ -40,7 +40,7 @@ http://www.mulesoft.org/schema/mule/ee/data-mapper http://www.mulesoft.org/schem
         <http:listener config-ref="HTTP_Listener_Configuration" path="/flights" allowedMethods="POST" doc:name="HTTP"/>
         <set-variable variableName="destination" value="#[payload.destination]" doc:name="Set Destination"/>
         <set-variable variableName="airline" value="#[payload.airline]" doc:name="Set Airline"/>
-        <logger message="#[payload]" level="INFO" doc:name="Logger"/>
+        <logger message="#['Destination: ' + destination + '\nAirline: ' + airline + '\nPayload: ' + payload]" level="INFO" doc:name="Logger"/>
         <choice doc:name="Choice">
             <when expression="#[flowVars.airline == &quot;all&quot;]">
                 <flow-ref name="getAllAirlinesFlightsFlow" doc:name="getAllAirlinesFlightsFlow"/>

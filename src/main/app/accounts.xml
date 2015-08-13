@@ -39,7 +39,7 @@ http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/cu
     <batch:job name="accountsBatch">
         <batch:input>
             <poll doc:name="Poll">
-                <fixed-frequency-scheduler frequency="30000"/>
+                <fixed-frequency-scheduler frequency="1" timeUnit="DAYS"/>
                 <watermark variable="lastAccountID" default-expression="0" selector="MAX" selector-expression="#[payload.accountID]"/>
                 <db:select config-ref="Training_MySQL_Configuration" doc:name="Database">
                     <db:parameterized-query><![CDATA[SELECT *
