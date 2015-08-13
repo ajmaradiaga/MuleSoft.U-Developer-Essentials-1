@@ -1,6 +1,6 @@
 <metadata__cache__entry>
   <version>5.2.0.0</version>
-  <connectorName>String_To_Xml_listAllFlights_</connectorName>
+  <connectorName>CSV_To_Map</connectorName>
   <metadataIo class="tree-map">
     <entry>
       <string>http://www.mulesoft.org/schema/mule/ee/data-mapper/transform</string>
@@ -9,9 +9,16 @@
           <string>__default__</string>
           <org.mule.tooling.metadata.cache.DefaultMetadataCacheEntry>
             <output class="org.mule.common.metadata.DefaultMetaData">
-              <payload class="org.mule.tooling.metadata.api.TypeRefMetaDataModel">
-                <connectorName>String_To_Xml_listAllFlights_</connectorName>
-                <typeId>findFlight</typeId>
+              <payload class="org.mule.common.metadata.DefaultListMetaDataModel">
+                <dataType>LIST</dataType>
+                <metaDataModelPropertiesManager>
+                  <properties/>
+                </metaDataModelPropertiesManager>
+                <model class="org.mule.tooling.metadata.api.TypeRefMetaDataModel">
+                  <connectorName>CSV_To_Map</connectorName>
+                  <typeId>accounts</typeId>
+                </model>
+                <isArray>false</isArray>
               </payload>
               <properties>
                 <entry>

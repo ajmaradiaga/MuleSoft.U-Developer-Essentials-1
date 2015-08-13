@@ -10,8 +10,9 @@
 	<classpathentry kind="src" path="src/main/java"/>
 	<classpathentry kind="lib" path="src/main/app/lib/mysql-connector-java-5.0.8-bin.jar"/>
 	<classpathentry kind="lib" path="src/main/app/lib/activemq-all-5.6.0.jar"/>
-	<classpathentry kind="src" path="src/main/resources"/>
+	<classpathentry including="FlightFinder.html|input/|output/" kind="src" path="src/main/resources"/>
 	<classpathentry kind="con" path="MULE_LIB/Salesforce/org.mule.tooling.ui.contribution.sfdc.3.5.0"/>
 	<classpathentry kind="con" path="MULE_LIB/Google Contacts/org.mule.tooling.ui.contribution.google-contacts.3.5.0"/>
+	<classpathentry kind="con" path="MULE_LIB/APIkit/org.mule.tooling.apikit.3.7.0"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

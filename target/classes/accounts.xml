@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:file="http://www.mulesoft.org/schema/mule/file"
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:data-mapper="http://www.mulesoft.org/schema/mule/ee/data-mapper" xmlns:file="http://www.mulesoft.org/schema/mule/file"
 	xmlns:http="http://www.mulesoft.org/schema/mule/http"
 	xmlns:json="http://www.mulesoft.org/schema/mule/json"
 	xmlns:sfdc="http://www.mulesoft.org/schema/mule/sfdc"
@@ -12,7 +12,13 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
 http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfdc/current/mule-sfdc.xsd
 http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
-http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/data-mapper http://www.mulesoft.org/schema/mule/ee/data-mapper/current/mule-data-mapper.xsd
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+    <data-mapper:config name="CSV_To_Map" transformationGraphPath="csv_to_map.grf" doc:name="CSV_To_Map"/>
+    <data-mapper:config name="List_Map__To_List_Account_" transformationGraphPath="list_map__to_list_account_.grf" doc:name="List_Map__To_List_Account_"/>
 
 <flow name="getSFDCAccountsFlow">
         <http:listener config-ref="HTTP_Listener_Configuration" path="/sfdc" allowedMethods="GET" doc:name="HTTP"/>
@@ -20,13 +26,71 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
         <json:object-to-json-transformer doc:name="Object to JSON"/>
         <logger message="#[payload]" level="INFO" doc:name="Logger"/>
     </flow>
-    <flow name="getCSVAccountsFlow">
-        <file:inbound-endpoint path="src/main/resources/input" moveToPattern="#[message.inboundProperties.originalFilename].backup" moveToDirectory="src/main/resources/output" responseTimeout="10000" doc:name="File">
+    <flow name="getCSVAccountsFlow" initialState="stopped">
+        <file:inbound-endpoint path="src/main/resources/input"   responseTimeout="10000" doc:name="File">
             <file:filename-regex-filter pattern=".*csv" caseSensitive="false"/>
         </file:inbound-endpoint>
-        <file:file-to-string-transformer doc:name="File to String"/>
+        <data-mapper:transform config-ref="CSV_To_Map" doc:name="CSV To Map"/>
+        <foreach doc:name="For Each">
+            <logger message="#[payload]" level="INFO" doc:name="Logger"/>
+        </foreach>
         <logger message="#[payload]" level="INFO" doc:name="Logger"/>
     </flow>
+    <batch:job name="accountsBatch">
+        <batch:input>
+            <poll doc:name="Poll">
+                <fixed-frequency-scheduler frequency="30000"/>
+                <watermark variable="lastAccountID" default-expression="0" selector="MAX" selector-expression="#[payload.accountID]"/>
+                <db:select config-ref="Training_MySQL_Configuration" doc:name="Database">
+                    <db:parameterized-query><![CDATA[SELECT *
+FROM accounts
+WHERE postal = '1111']]></db:parameterized-query>
+                </db:select>
+            </poll>
+            <data-mapper:transform config-ref="List_Map__To_List_Account_" doc:name="List&lt;Map&gt; To List&lt;Account&gt;"/>
+        </batch:input>
+        <batch:process-records>
+            <batch:step name="Batch_Step3">
+                <enricher source="#[payload.size() &gt; 0]" target="#[recordVars.exists]" doc:name="Check Record Exists">
+                    <sfdc:query config-ref="Salesforce__Basic_authentication" query="dsql:SELECT Name FROM Account WHERE Name = '#[payload.Name]'" doc:name="Salesforce"/>
+                </enricher>
+                <logger message="#['\n\nRecordVar: ' + recordVars.exists]" level="INFO" doc:name="Logger"/>
+            </batch:step>
+            <batch:step name="Batch_Step2" accept-expression="#[!recordVars.exists]">
+                <logger message="#['Record: ' + payload + '\n']" level="INFO" doc:name="Logger"/>
+                <batch:commit size="100" doc:name="Batch Commit">
+                    <sfdc:create config-ref="Salesforce__Basic_authentication" type="Account" doc:name="Salesforce">
+                        <sfdc:objects ref="#[payload]"/>
+                    </sfdc:create>
+                </batch:commit>
+            </batch:step>
+        </batch:process-records>
+        <batch:on-complete>
+            <logger message="#['\n\nProcessed: ' + payload.processedRecords + ' Failed: ' + payload.failedRecords]" level="INFO" doc:name="Logger"/>
+        </batch:on-complete>
+    </batch:job>
+    <batch:job name="accountsCSVBatch">
+        <batch:input>
+            <file:inbound-endpoint path="src/main/resources/input" responseTimeout="10000" doc:name="File">
+                <file:filename-regex-filter pattern=".*csv" caseSensitive="false"/>
+            </file:inbound-endpoint>
+            <data-mapper:transform config-ref="CSV_To_Map" doc:name="CSV To Map"/>
+            <set-variable variableName="size" value="#[payload.size()]" doc:name="Size"/>
+        </batch:input>
+        <batch:process-records>
+            <batch:step name="Batch_Step">
+                <set-variable variableName="fname" value="#[payload.Name]" doc:name="Variable"/>
+                <batch:set-record-variable variableName="rname" value="#[payload.Name]" doc:name="Record Variable"/>
+                <logger message="#['\n\nFlowVar:' + flowVars.fname + '\n\nRecordVar: ' + recordVars.rname]" level="INFO" doc:name="Logger"/>
+            </batch:step>
+            <batch:step name="Batch_Step1">
+                <logger message="#['\n\nRecordVar: ' + recordVars.rname]" level="INFO" doc:name="Logger"/>
+            </batch:step>
+        </batch:process-records>
+        <batch:on-complete>
+            <logger message="#['\n\nProcessed: ' + payload.processedRecords + ' Failed: ' + payload.failedRecords]" level="INFO" doc:name="Logger"/>
+        </batch:on-complete>
+    </batch:job>
     <flow name="getBankAccountsFlow">
         <http:listener config-ref="HTTP_Listener_Configuration" path="/bank/{ID}" allowedMethods="GET" doc:name="HTTP"/>
         <http:request config-ref="Bank_REST_Request_Configuration" path="/customers/{customer_id}/accounts" method="GET" doc:name="Bank REST Request">

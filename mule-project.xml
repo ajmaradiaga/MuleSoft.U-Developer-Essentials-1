@@ -4,4 +4,5 @@
     <description></description>
     <muleExtension name="Salesforce" qualifier="org.mule.tooling.ui.contribution.sfdc.3.5.0"/>
     <muleExtension name="Google Contacts" qualifier="org.mule.tooling.ui.contribution.google-contacts.3.5.0"/>
+    <muleExtension name="APIkit" qualifier="org.mule.tooling.apikit.3.7.0"/>
 </mule-project>

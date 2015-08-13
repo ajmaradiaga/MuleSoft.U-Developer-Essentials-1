@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?><Graph __version="3.5.0" author="antoniomaradiaga" created="Tue Aug 11 09:35:08 ACST 2015" description="CSV To Map" guiVersion="3.4.4.P" id="1439251722414" licenseCode="Unlicensed" licenseType="Unknown" modified="Tue Aug 11 09:35:08 ACST 2015" modifiedBy="antoniomaradiaga" name="CSV_To_Map" revision="1.0" showComponentDetails="false">
+<Global>
+<Metadata __referenceCounter="1" _dataStructure="SINGLE_DIMENSIONAL_COLLECTION" _type="Input" id="660a1b42-6189-4472-8624-6142094d8f5e">
+<Record fieldDelimiter="," name="accounts" recordDelimiter="\n\\|\r\n\\|\r" type="delimited">
+<Field containerType="SINGLE" label="Billing Street" name="Billing_Street" size="10" type="string"/>
+<Field containerType="SINGLE" label="Billing City" name="Billing_City" size="10" type="string"/>
+<Field containerType="SINGLE" label="Billing Country" name="Billing_Country" size="10" type="string"/>
+<Field containerType="SINGLE" label="Billing State" name="Billing_State" size="10" type="string"/>
+<Field containerType="SINGLE" label="Name" name="Name" size="10" type="string"/>
+<Field containerType="SINGLE" eofAsDelimiter="true" label="BillingPostalCode" name="BillingPostalCode" size="10" type="string"/>
+<Field __artificialType="_id" auto_filling="global_row_count" name="__id" type="long"/>
+</Record>
+</Metadata>
+<Metadata __index="0" __referenceCounter="1" __sourcePath="{}/accounts" _dataStructure="SINGLE_DIMENSIONAL_COLLECTION" _id="__id" _type="Output" id="c5fbac3f-bf27-43fe-a3cc-b9a92907afd2">
+<Record fieldDelimiter="," name="accounts" recordDelimiter="\n\\|\r\n\\|\r" type="delimited">
+<Field __artificialType="_id" __systemManaged="true" name="__id" type="string"/>
+<Field __index="5" __sourcePath="{}/accounts/BillingPostalCode" containerType="SINGLE" label="BillingPostalCode" name="BillingPostalCode" type="string"/>
+<Field __index="1" __sourcePath="{}/accounts/Billing_x0020City" containerType="SINGLE" label="Billing City" name="Billing_City" type="string"/>
+<Field __index="2" __sourcePath="{}/accounts/Billing_x0020Country" containerType="SINGLE" label="Billing Country" name="Billing_Country" type="string"/>
+<Field __index="3" __sourcePath="{}/accounts/Billing_x0020State" containerType="SINGLE" label="Billing State" name="Billing_State" type="string"/>
+<Field __index="0" __sourcePath="{}/accounts/Billing_x0020Street" containerType="SINGLE" label="Billing Street" name="Billing_Street" type="string"/>
+<Field __index="4" __sourcePath="{}/accounts/Name" containerType="SINGLE" label="Name" name="Name" type="string"/>
+</Record>
+</Metadata>
+<Dictionary>
+<Entry id="DictionaryEntry0" input="true" name="inputPayload" output="false" type="object"/>
+<Entry id="DictionaryEntry1" input="false" name="outputPayload" output="true" type="object"/>
+</Dictionary>
+</Global>
+<Phase number="0">
+<Node charset="UTF-8" enabled="enabled" fileURL="dict:inputPayload" guiName="CSV READER" guiX="20" guiY="20" id="DATA_READER0" quoteCharacter="both" quotedStrings="true" skipRows="1" trim="true" type="DATA_READER">
+<attr name="_data_format"><![CDATA[CSV]]></attr>
+<attr name="__dataSourceDefinition"><![CDATA[src/main/resources/input/accounts.csv]]></attr>
+</Node>
+<Node enabled="enabled" guiName="Foreach 'accounts' -&gt; 'accounts'" guiX="460" guiY="20" id="FOREACH_ACCOUNTS_ACCOUNTS" transformClass="com.mulesoft.datamapper.transform.MelRecordTransform" type="REFORMAT">
+<attr name="melScript"><![CDATA[//MEL
+//START -> DO NOT REMOVE
+output.__id = num2str(input.__id);
+//END -> DO NOT REMOVE
+output.Billing_Street = input.Billing_Street;
+output.Billing_City = input.Billing_City;
+output.Billing_Country = input.Billing_Country;
+output.Billing_State = input.Billing_State;
+output.Name = input.Name;
+output.BillingPostalCode = input.BillingPostalCode;
+]]></attr>
+</Node>
+<Node cacheInMemory="true" enabled="enabled" fileURL="dict:outputPayload" guiName="Map&lt;k,v&gt; WRITER" guiX="900" guiY="20" id="MAP_WRITER0" type="MAP_WRITER">
+<attr name="mapping"><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
+<clover:collection clover:name="accounts" xmlns:clover="http://www.cloveretl.com/ns/xmlmapping">
+  <item clover:inPort="0">
+    <clover:element clover:name="Billing Street">$0.Billing_Street</clover:element>
+    <clover:element clover:name="Billing City">$0.Billing_City</clover:element>
+    <clover:element clover:name="Billing Country">$0.Billing_Country</clover:element>
+    <clover:element clover:name="Billing State">$0.Billing_State</clover:element>
+    <Name>$0.Name</Name>
+    <BillingPostalCode>$0.BillingPostalCode</BillingPostalCode>
+  </item>
+</clover:collection>]]></attr>
+<attr name="_data_format"><![CDATA[MAP]]></attr>
+</Node>
+<Edge debugMode="true" fromNode="DATA_READER0:0" guiBendpoints="" id="Edge0" inPort="Port 0 (in)" metadata="660a1b42-6189-4472-8624-6142094d8f5e" outPort="Port 0 (output)" toNode="FOREACH_ACCOUNTS_ACCOUNTS:0"/>
+<Edge debugMode="true" fromNode="FOREACH_ACCOUNTS_ACCOUNTS:0" guiBendpoints="" id="Edge1" inPort="Port 0 (in)" metadata="c5fbac3f-bf27-43fe-a3cc-b9a92907afd2" outPort="Port 0 (out)" toNode="MAP_WRITER0:0"/>
+</Phase>
+</Graph>

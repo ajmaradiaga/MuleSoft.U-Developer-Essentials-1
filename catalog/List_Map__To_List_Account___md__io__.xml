@@ -1,6 +1,6 @@
 <metadata__cache__entry>
   <version>5.2.0.0</version>
-  <connectorName>List_Map__To_Pojo</connectorName>
+  <connectorName>List_Map__To_List_Account_</connectorName>
   <metadataIo class="tree-map">
     <entry>
       <string>http://www.mulesoft.org/schema/mule/ee/data-mapper/transform</string>
@@ -15,7 +15,7 @@
                   <properties/>
                 </metaDataModelPropertiesManager>
                 <model class="org.mule.tooling.metadata.api.TypeRefMetaDataModel">
-                  <connectorName>List_Map__To_Pojo</connectorName>
+                  <connectorName>List_Map__To_List_Account_</connectorName>
                   <typeId>Map</typeId>
                 </model>
                 <isArray>false</isArray>
@@ -60,8 +60,8 @@
                   <properties/>
                 </metaDataModelPropertiesManager>
                 <model class="org.mule.tooling.metadata.api.TypeRefMetaDataModel">
-                  <connectorName>List_Map__To_Pojo</connectorName>
-                  <typeId>com.mulesoft.training.Flight</typeId>
+                  <connectorName>List_Map__To_List_Account_</connectorName>
+                  <typeId>Account</typeId>
                 </model>
                 <isArray>false</isArray>
               </payload>
